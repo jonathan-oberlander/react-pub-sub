@@ -20,18 +20,19 @@ const reducer: Reducer<State, Message> = (state, message,) => {
       return {
         ...state,
         amount: state.amount + message.amount,
-        message: 'going up >.<'
+        message: state.amount > 9000 ? 'It\'s over 9000!!!' : 'going up >.<'
       };
     case "decrease":
       return {
         ...state,
         amount: state.amount - message.by,
-        message: 'going down :('
+        message: state.amount > 0 ? 'going down :(' : 'oh no'
       };
     case "win":
       return {
         ...state,
-        message: 'It\'s over 9000!!!'
+        amount: Infinity,
+        message: 'and beyond'
       };
     case "reset":
       return {
@@ -52,18 +53,11 @@ export const useMessagingState = () => {
   const reset = () => sendMessage({ msg: "reset" })
   const win = () => sendMessage({ msg: "win" })
 
-  useEffect(() => {
-    if (state.amount > 9000) {
-      win()
-    }
-
-    return () => reset()
-  }, [state.amount])
-
   return {
     state,
     add,
     sub,
     reset,
+    win,
   }
 };

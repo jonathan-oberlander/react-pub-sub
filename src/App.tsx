@@ -35,13 +35,14 @@ function ShowMessagingState() {
 }
 
 function MessageActions() {
-  const { add, sub, reset } = useMessagingState()
+  const { state, add, sub, reset, win } = useMessagingState()
 
   return (
     <div>
-      <button onClick={() => sub(2030)}>Sub</button>
-      <button onClick={reset}>Reset</button>
-      <button onClick={() => add(1240)}>Add</button>
+      <button disabled={state.amount > 20000} onClick={() => sub(2030)}>Sub</button>
+      <button disabled={state.amount > 20000} onClick={reset}>Reset</button>
+      <button disabled={state.amount > 20000} onClick={() => add(1240)}>Add</button>
+      <button onClick={win}>Win</button>
     </div>
   );
 }
