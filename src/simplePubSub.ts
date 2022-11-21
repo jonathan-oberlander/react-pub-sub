@@ -37,8 +37,8 @@ export const createAtom = <V>(initValue: V) => {
 };
 
 export const createAtomReducer = <S, M>(
+  reducer: Reducer<S, M>,
   initialState: S,
-  reducer: Reducer<M, S>
 ) => {
   const suscribers = atom<S>();
 
@@ -49,8 +49,8 @@ export const createAtomReducer = <S, M>(
 
     return {
       state: value,
-      sendMessage: (m: M, s: S) => {
-        const state = reducer(m, s);
+      sendMessage: (message: M) => {
+        const state = reducer(value, message);
         setValue(state);
         suscribers.publish(state);
       },
@@ -58,4 +58,4 @@ export const createAtomReducer = <S, M>(
   };
 };
 
-export type Reducer<M, S> = (message: M, state: S) => S;
+export type Reducer<S, M> = (state: S, message: M) => S;

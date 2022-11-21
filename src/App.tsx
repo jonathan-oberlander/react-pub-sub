@@ -54,7 +54,7 @@ type Message =
   | { msg: "decrease"; by: number }
   | { msg: "reset" };
 
-const reducer: Reducer<Message, State> = (message, state) => {
+const reducer: Reducer<State, Message> = (state, message, ) => {
   switch (message.msg) {
     case "increase":
       return {
@@ -74,7 +74,7 @@ const reducer: Reducer<Message, State> = (message, state) => {
   }
 };
 
-const useData = createAtomReducer({ amount: 0 }, reducer);
+const useData = createAtomReducer(reducer, { amount: 0 }, );
 
 function ShowState() {
   const { state } = useData();
@@ -83,11 +83,11 @@ function ShowState() {
 }
 
 function Dialer() {
-  const { state, sendMessage } = useData();
+  const { sendMessage } = useData();
 
-  const add = () => sendMessage({ msg: "increase", amount: 20 }, state);
-  const sub = () => sendMessage({ msg: "decrease", by: 20 }, state);
-  const reset = () => sendMessage({ msg: "reset" }, state);
+  const add = () => sendMessage({ msg: "increase", amount: 20 });
+  const sub = () => sendMessage({ msg: "decrease", by: 20 });
+  const reset = () => sendMessage({ msg: "reset" });
 
   return (
     <div>
