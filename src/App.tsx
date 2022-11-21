@@ -1,10 +1,21 @@
-import { createAtom, createAtomReducer, Reducer } from "./simplePubSub";
+import { useMessagingState } from "./messaging";
+import { createAtom } from "./simplePubSub";
+
+function Inner({ children }: ReactChildren) {
+  return <div style={{
+    border: '1px solid gray',
+    padding: 2,
+    margin: 2,
+  }}>
+    {children}
+  </div>;
+}
+
+// STATE //////////////////////////////////////////
 
 const useCounter = createAtom(0);
 
-type IncreaseProps = { by: number };
-
-function Increase({ by }: IncreaseProps) {
+function Increase({ by }: { by: number }) {
   const { state, setState } = useCounter();
   const onClick = () => setState(state + by);
 
@@ -13,87 +24,56 @@ function Increase({ by }: IncreaseProps) {
 
 function DisplayCounter() {
   const { state } = useCounter();
-
   return <h1>{state}</h1>;
 }
 
-function Composed() {
+// REDUCER //////////////////////////////////////////
+
+function ShowMessagingState() {
+  const { state } = useMessagingState();
+  return <h1>{state.amount} {state.message}</h1>;
+}
+
+function MessageActions() {
+  const { add, sub, reset } = useMessagingState()
+
   return (
     <div>
-      <Inner />
-      <Inner />
-      <Inner />
-      <DisplayCounter />
+      <button onClick={() => sub(2030)}>Sub</button>
+      <button onClick={reset}>Reset</button>
+      <button onClick={() => add(1240)}>Add</button>
     </div>
   );
 }
 
-function Inner() {
-  return <div>Inner component</div>;
+// APP /////////////////////////////////////////////
+
+function Composition() {
+  return (
+    <div>
+      <Inner>
+        <Inner>
+          <Inner>
+            <hr />
+            <ShowMessagingState />
+          </Inner>
+          <Inner>
+            <DisplayCounter />
+          </Inner>
+        </Inner>
+      </Inner>
+      <MessageActions />
+    </div>
+  );
 }
 
-export default function () {
+export default function App() {
   return (
     <div className="App">
       <DisplayCounter />
       <Increase by={1} />
       <Increase by={5} />
-      <hr />
-      <ShowState />
-      <Dialer />
-    </div>
-  );
-}
-
-type State = {
-  amount: number;
-};
-
-type Message =
-  | { msg: "increase"; amount: number }
-  | { msg: "decrease"; by: number }
-  | { msg: "reset" };
-
-const reducer: Reducer<State, Message> = (state, message, ) => {
-  switch (message.msg) {
-    case "increase":
-      return {
-        ...state,
-        amount: state.amount + message.amount,
-      };
-    case "decrease":
-      return {
-        ...state,
-        amount: state.amount - message.by,
-      };
-    case "reset":
-      return {
-        ...state,
-        amount: 0,
-      };
-  }
-};
-
-const useData = createAtomReducer(reducer, { amount: 0 }, );
-
-function ShowState() {
-  const { state } = useData();
-
-  return <h1>{state.amount}</h1>;
-}
-
-function Dialer() {
-  const { sendMessage } = useData();
-
-  const add = () => sendMessage({ msg: "increase", amount: 20 });
-  const sub = () => sendMessage({ msg: "decrease", by: 20 });
-  const reset = () => sendMessage({ msg: "reset" });
-
-  return (
-    <div>
-      <button onClick={sub}>Sub</button>
-      <button onClick={reset}>Reset</button>
-      <button onClick={add}>Add</button>
+      <Composition />
     </div>
   );
 }
