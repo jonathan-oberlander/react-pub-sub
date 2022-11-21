@@ -1,50 +1,63 @@
-import { useMessagingState } from "./messaging";
-import { createAtom } from "./simplePubSub";
+import { useMessagingState } from './messaging'
+import { createAtom } from './simplePubSub'
 
 function Inner({ children }: ReactChildren) {
-  return <div style={{
-    border: '1px solid gray',
-    padding: 2,
-    margin: 2,
-  }}>
-    {children}
-  </div>;
+  return (
+    <div
+      style={{
+        border: '1px solid gray',
+        padding: 2,
+        margin: 2,
+      }}
+    >
+      {children}
+    </div>
+  )
 }
 
 // STATE //////////////////////////////////////////
 
-const useCounter = createAtom(0);
+const useCounter = createAtom(0)
 
 function Increase({ by }: { by: number }) {
-  const { state, setState } = useCounter();
-  const onClick = () => setState(state + by);
+  const { state, setState } = useCounter()
+  const onClick = () => setState(state + by)
 
-  return <button onClick={onClick}>Add {by}</button>;
+  return <button onClick={onClick}>Add {by}</button>
 }
 
 function DisplayCounter() {
-  const { state } = useCounter();
-  return <h1>{state}</h1>;
+  const { state } = useCounter()
+  return <h1>{state}</h1>
 }
-
 // REDUCER //////////////////////////////////////////
 
 function ShowMessagingState() {
-  const { state } = useMessagingState();
-  return <h1>{state.amount} {state.message}</h1>;
+  const { state } = useMessagingState()
+  return (
+    <h1>
+      {state.amount} {state.message}
+    </h1>
+  )
 }
 
 function MessageActions() {
-  const { state, add, sub, reset, win } = useMessagingState()
+  const { overIt, add, sub, reset, win } = useMessagingState()
 
   return (
     <div>
-      <button disabled={state.amount > 20000} onClick={() => sub(2030)}>Sub</button>
-      <button disabled={state.amount > 20000} onClick={reset}>Reset</button>
-      <button disabled={state.amount > 20000} onClick={() => add(1240)}>Add</button>
-      <button onClick={win}>Win</button>
+      <button disabled={overIt} onClick={() => sub(2030)}>
+        Sub
+      </button>
+      <button onClick={reset}>Reset</button>
+      <button disabled={overIt} onClick={() => add(1240)}>
+        Add
+      </button>
+      <button disabled={overIt} onClick={win}>
+        Win
+      </button>
     </div>
-  );
+  )
 }
 
 // APP /////////////////////////////////////////////
@@ -65,7 +78,7 @@ function Composition() {
       </Inner>
       <MessageActions />
     </div>
-  );
+  )
 }
 
 export default function App() {
@@ -76,5 +89,5 @@ export default function App() {
       <Increase by={5} />
       <Composition />
     </div>
-  );
+  )
 }
