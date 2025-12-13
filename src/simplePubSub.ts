@@ -56,3 +56,34 @@ export const createAtomReducer = <S, M>(reducer: Reducer<S, M>, initialState: S)
 }
 
 export type Reducer<S, M> = (state: S, message: M) => S
+
+
+
+export const createAtomFull = <V>(initValue: V, selectors?: SelectorMap<V>) => {
+  const subscribers = atom<V>()
+
+  return () => {
+    const [value, setValue] = useState(initValue)
+
+    useEffect(() => subscribers.subscribe(setValue), [])
+
+    const selectorsObj = useMemo(() => {
+      if (!selectors) return {}
+      return Object.fromEntries(
+        Object.entries(selectors).map(([key, selectorFn]) => [
+          key,
+          () => selectorFn(value)
+        ])
+      )
+    }, [value, selectors])
+
+    return {
+      state: value,
+      setState: (updater: V | ((current: V) => V)) => {
+        setValue(updater instanceof Function ? updater(value) : updater)
+        subscribers.publish(updater instanceof Function ? updater(value) : updater)
+      },
+      ...selectorsObj,
+    }
+  }
+}
