@@ -59,7 +59,7 @@ export type Reducer<S, M> = (state: S, message: M) => S
 
 
 
-export const createAtomFull = <V>(initValue: V, selectors?: SelectorMap<V>) => {
+export const createAtomWithSelectors = <V>(initValue: V, selectors?: SelectorMap<V>) => {
   const subscribers = atom<V>()
 
   return () => {
@@ -84,6 +84,56 @@ export const createAtomFull = <V>(initValue: V, selectors?: SelectorMap<V>) => {
         subscribers.publish(updater instanceof Function ? updater(value) : updater)
       },
       ...selectorsObj,
+    }
+  }
+}
+
+
+export const createAtomFull = <V>(initValue: V, config: AtomConfig<V> = {}) => {
+  const { selectors, updaters } = config
+  const subscribers = atom<V>()
+
+  return () => {
+    const [value, setValue] = useState(initValue)
+
+    useEffect(() => subscribers.suscribe(setValue), [])
+
+    const selectorFns = useMemo(() => {
+      if (!selectors) return {}
+      return Object.fromEntries(
+        Object.entries(selectors).map(([key, fn]) => [
+          key,
+          () => fn(value),
+        ]),
+      )
+    }, [value, selectors])
+
+    const updaterFns = useMemo(() => {
+      if (!updaters) return {}
+      return Object.fromEntries(
+        Object.entries(updaters).map(([key, fn]) => [
+          key,
+          (...args: any[]) => {
+            const next = fn(value, ...args)
+            setValue(next)
+            subscribers.publish(next)
+          },
+        ]),
+      )
+    }, [value, updaters])
+
+    const setState = (updater: V | ((current: V) => V)) => {
+      const next =
+        typeof updater === 'function' ? (updater as (c: V) => V)(value) : updater
+      setValue(next)
+      subscribers.publish(next)
+    }
+
+    return {
+      state: value,
+      setState,
+      ...selectorFns,
+      ...updaterFns,
     }
   }
 }
