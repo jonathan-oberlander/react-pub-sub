@@ -109,18 +109,22 @@ export const createAtomFull = <V>(initValue: V, config: AtomConfig<V> = {}) => {
     }, [value, selectors])
 
     const updaterFns = useMemo(() => {
-      if (!updaters) return {}
-      return Object.fromEntries(
-        Object.entries(updaters).map(([key, fn]) => [
-          key,
-          (...args: any[]) => {
-            const next = fn(value, ...args)
-            setValue(next)
-            subscribers.publish(next)
-          },
-        ]),
-      )
-    }, [value, updaters])
+  if (!updaters) return {}
+  return Object.fromEntries(
+    Object.entries(updaters).map(([key, fn]) => {
+      // Parameters<typeof fn> gives [V, ...Args]
+      type FnArgs = Parameters<typeof fn>
+      return [
+        key,
+        (...args: FnArgs) => {
+          const next = fn(value, ...args.slice(1) as any[]) // Skip first V arg
+          setValue(next)
+          subscribers.publish(next)
+        },
+      ]
+    }),
+  ) as Record<keyof typeof updaters, any>
+}, [value, updaters])
 
     const setState = (updater: V | ((current: V) => V)) => {
       const next =
@@ -136,4 +140,20 @@ export const createAtomFull = <V>(initValue: V, config: AtomConfig<V> = {}) => {
       ...updaterFns,
     }
   }
+}
+
+const counterAtom = createAtom<number>(0, {
+  updaters: {
+    increment: (current: number) => current + 1,           // V = number
+    add: (current: number, amount: number) => current + amount,  // V + number
+    multiply: (current: number, factor: number) => current * factor,
+  },
+})
+
+function Counter() {
+  const counter = counterAtom()
+  counter.increment()     // ✅ No args needed
+  counter.add(5)          // ✅ Expects number  
+  counter.multiply(3)     // ✅ Expects number
+  // counter.add('hello') // ❌ TypeScript error!
 }
