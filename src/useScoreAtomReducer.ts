@@ -1,5 +1,4 @@
-import { useMemo } from 'react'
-import { createAtomReducer, Reducer } from './simplePubSub'
+import { createAtomReducer, Reducer } from './atom'
 
 const initialState = {
   amount: 0,
@@ -18,7 +17,6 @@ const reducer: Reducer<State, Message> = (state, message) => {
   switch (message.msg) {
     case 'increase':
       return {
-        ...state,
         amount: state.amount + message.amount,
         message:
           state.amount + message.amount > 9000
@@ -27,43 +25,40 @@ const reducer: Reducer<State, Message> = (state, message) => {
       }
     case 'decrease':
       return {
-        ...state,
         amount: state.amount - message.by,
-        message: state.amount > 0 ? 'going down :(' : 'oh no',
+        message: state.amount > 0 ? 'going down...' : 'oh noooo',
       }
     case 'win':
       return {
-        ...state,
         amount: Infinity,
         message: 'and beyond',
       }
     case 'reset':
       return {
-        ...state,
         amount: 0,
-        message: 'Son of a B$@#!!',
+        message: 'Zero!!',
       }
   }
 }
 
 export const useMessagingAtom = createAtomReducer(reducer, initialState)
 
-export function useMessagingState() {
-  const { state, sendMessage } = useMessagingAtom()
+// export function useMessagingState() {
+//   const { state, sendMessage } = useMessagingAtom()
 
-  const add = (amount: number) => sendMessage({ msg: 'increase', amount })
-  const sub = (by: number) => sendMessage({ msg: 'decrease', by })
-  const reset = () => sendMessage({ msg: 'reset' })
-  const win = () => sendMessage({ msg: 'win' })
+//   const add = (amount: number) => sendMessage({ msg: 'increase', amount })
+//   const sub = (by: number) => sendMessage({ msg: 'decrease', by })
+//   const reset = () => sendMessage({ msg: 'reset' })
+//   const win = () => sendMessage({ msg: 'win' })
 
-  const overIt = state.amount > 30000
+//   const overIt = state.amount > 30000
 
-  return {
-    state,
-    overIt,
-    add,
-    sub,
-    reset,
-    win,
-  }
-}
+//   return {
+//     state,
+//     overIt,
+//     add,
+//     sub,
+//     reset,
+//     win,
+//   }
+// }

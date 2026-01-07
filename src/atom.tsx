@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useReducer } from 'react'
 
 function atom<T>() {
   type Fn = (value: T) => void
@@ -19,18 +19,49 @@ function atom<T>() {
 }
 
 export const createAtom = <V,>(initValue: V) => {
-  const suscribers = atom<V>()
+  const subscribers = atom<V>()
 
   return () => {
     const [value, setValue] = useState(initValue)
 
-    useEffect(() => suscribers.subscribe(setValue), [])
+    useEffect(() => {
+      const unsubscribe = subscribers.subscribe(setValue)
+      return () => unsubscribe()
+    }, [])
 
     return {
       state: value,
       setState: (v: V) => {
         setValue(v)
-        suscribers.publish(v)
+        subscribers.publish(v)
+        //   const next = typeof v === 'function' ? (v as (prev: V) => V)(value) : v
+        //   setValue(next)
+        //   subscribers.publish(next)
+      },
+    }
+  }
+}
+
+export const createReducedAtom = <V extends object>(initValue: V) => {
+  const subscribers = atom<V>()
+
+  return () => {
+    const [state, dispatch] = useReducer(
+      (prev: V, next: Partial<V>) => ({ ...prev, ...next }),
+      initValue
+    )
+
+    useEffect(() => {
+      const unsubscribe = subscribers.subscribe(v => dispatch(v as Partial<V>))
+      return () => unsubscribe()
+    }, [])
+
+    return {
+      state,
+      setState: (update: Partial<V>) => {
+        const nextState = { ...state, ...update }
+        dispatch(update)
+        subscribers.publish(nextState)
       },
     }
   }
@@ -56,13 +87,14 @@ export const createAtomReducer = <S, M>(reducer: Reducer<S, M>, initialState: S)
 }
 
 export type Reducer<S, M> = (state: S, message: M) => S
-type SelectorMap<V> = Record<string, (v: V, ...args: any[]) => V>
+
+type SelectorMap<V> = Record<string, (v: V, ...args: any[]) => any>
 type UpdaterMap<V> = Record<string, (v: V, ...args: any[]) => V>
 
 type SelectFunctions<V, S extends SelectorMap<V>> = {
-  [K in keyof S]: S[K] extends (v: V, ...args: infer P) => infer R
-    ? (...args: P) => R
-    : never
+  [K in keyof S]: (
+    ...args: Parameters<S[K]> extends [any, ...infer P] ? P : never
+  ) => ReturnType<S[K]>
 }
 
 type UpdaterFns<V, U extends UpdaterMap<V>> = {
@@ -81,26 +113,35 @@ export function createAtomConfig<
   V,
   S extends SelectorMap<V> = {},
   U extends UpdaterMap<V> = {}
->(initValue: V, selectors?: S, updaters?: U): AtomRT<V, S, U> {
+>(initValue: V, updaters?: U, selectors?: S): AtomRT<V, S, U> {
   const subscribers = atom<V>()
 
   return () => {
     const [value, setValue] = useState(initValue)
-    useEffect(() => subscribers.subscribe(setValue), [])
+    useEffect(() => {
+      // subscribers.subscribe(setValue)
+      const unsubscribe = subscribers.subscribe(setValue)
+      return () => unsubscribe()
+    }, [])
 
     const selectorsObj = useMemo(() => {
-      if (!selectors) return {} as SelectFunctions<V, S>
+      if (!selectors) {
+        return {} as SelectFunctions<V, S>
+      }
 
       return Object.fromEntries(
         Object.entries(selectors).map(([key, selectorFn]) => [
           key,
-          () => selectorFn(value),
+          (...args: any[]) => selectorFn(value, ...args),
         ])
       ) as SelectFunctions<V, S>
     }, [value, selectors])
 
     const updatersObj = useMemo(() => {
-      if (!updaters) return {} as UpdaterFns<V, U>
+      if (!updaters) {
+        return {} as UpdaterFns<V, U>
+      }
+
       return Object.fromEntries(
         Object.entries(updaters).map(([key, updaterFn]) => [
           key,
@@ -124,24 +165,4 @@ export function createAtomConfig<
       ...updatersObj,
     }
   }
-}
-
-const counterAtom = createAtomConfig(0, {
-  by: (x: number, n: number) => n * x,
-  by2: (n: number) => n * 2
-}, {
-  increment: (current: number) => current + 1,
-  add: (current: number, amount: number) => current + amount,
-  multiply: (current: number, factor: number) => current * factor,
-})
-
-function Counter() {
-  const counter = counterAtom()
-  counter.increment() // ✅ Now updates state
-  counter.add(5) // ✅ Expects number
-  counter.multiply(3) // ✅ Expects number
-  // counter.add('hello') // ❌ TypeScript error!
-
-  counter.by2()
-  counter.by(7)
 }

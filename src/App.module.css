@@ -1,0 +1,28 @@
+.App {
+  max-width: 50%;
+  margin: 0 auto;
+  padding: 6px;
+  border: 1px solid gray;
+  border-radius: 6px;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      display: flex;
+      flex-direction: column;
+
+      input {
+        height: 25px;
+        font-size: large;
+      }
+    }
+  }
+
+  pre {
+    margin-top: 40px;
+    padding: 10px;
+  }
+}
