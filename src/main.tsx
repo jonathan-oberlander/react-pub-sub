@@ -1,11 +1,13 @@
-import { createRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client'
 import App from './App'
 
-const container = document.getElementById('root');
+import './main.css'
 
-if(!container) {
-  throw new Error("node id 'root' is missing") 
+const container = document.getElementById('root')
+
+if (!container) {
+  throw new Error("node id 'root' is missing")
 }
 
-const root = createRoot(container!);
-root.render(<App />);
+const root = createRoot(container!)
+root.render(<App />)
